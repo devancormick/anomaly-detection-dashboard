@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   BarChart,
   Bar,
@@ -7,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import ChartDetailModal from './ChartDetailModal'
 
 interface DataItem {
   name: string
@@ -17,13 +19,22 @@ interface SourceChartProps {
   data: DataItem[]
 }
 
+const SOURCE_DETAILS: Record<string, string> = {
+  'auth-service': 'Authentication and authorization service logs. Includes login attempts, token validation, session management, and access control events.',
+  'api-gateway': 'API gateway and request routing logs. Tracks incoming requests, rate limiting, routing decisions, and gateway-level errors.',
+  'ml-pipeline': 'Machine learning pipeline and model inference logs. Captures feature extraction, model predictions, anomaly scores, and pipeline execution events.',
+  'database': 'Database connection and query logs. Includes connection pool status, query execution, transactions, and database-level errors.',
+}
+
 export default function SourceChart({ data }: SourceChartProps) {
+  const [selected, setSelected] = useState<DataItem | null>(null)
   const displayData = data.map((d) => ({
     ...d,
     shortName: d.name.replace(/-/g, ' '),
   }))
 
   return (
+    <>
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={displayData} margin={{ top: 0, right: 16, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
@@ -48,8 +59,20 @@ export default function SourceChart({ data }: SourceChartProps) {
           fill="var(--color-primary)"
           radius={[4, 4, 0, 0]}
           maxBarSize={40}
+          cursor="pointer"
+          onClick={(data) => data && setSelected(data as DataItem)}
         />
       </BarChart>
     </ResponsiveContainer>
+    <ChartDetailModal
+      isOpen={!!selected}
+      onClose={() => setSelected(null)}
+      title={selected ? `${selected.name}: ${selected.count} logs` : ''}
+    >
+      {selected && (
+        <p>{SOURCE_DETAILS[selected.name] ?? `Logs from ${selected.name}. ${selected.count} log entries were captured from this source.`}</p>
+      )}
+    </ChartDetailModal>
+    </>
   )
 }
