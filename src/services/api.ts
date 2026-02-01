@@ -111,6 +111,36 @@ export const api = {
     })).reverse()
   },
 
+  async getLogLevelDistribution(): Promise<{ name: string; value: number; fill: string }[]> {
+    await new Promise((r) => setTimeout(r, 200))
+    const counts = { info: 0, warning: 0, error: 0 }
+    mockLogs.forEach((l) => { counts[l.level]++ })
+    return [
+      { name: 'Info', value: counts.info, fill: '#22c55e' },
+      { name: 'Warning', value: counts.warning, fill: '#f59e0b' },
+      { name: 'Error', value: counts.error, fill: '#ef4444' },
+    ]
+  },
+
+  async getSeverityDistribution(): Promise<{ name: string; count: number }[]> {
+    await new Promise((r) => setTimeout(r, 200))
+    const counts = { low: 0, medium: 0, high: 0, critical: 0 }
+    mockAlerts.forEach((a) => { counts[a.severity]++ })
+    return [
+      { name: 'Low', count: counts.low },
+      { name: 'Medium', count: counts.medium },
+      { name: 'High', count: counts.high },
+      { name: 'Critical', count: counts.critical },
+    ]
+  },
+
+  async getSourceDistribution(): Promise<{ name: string; count: number }[]> {
+    await new Promise((r) => setTimeout(r, 200))
+    const counts: Record<string, number> = {}
+    mockLogs.forEach((l) => { counts[l.source] = (counts[l.source] || 0) + 1 })
+    return Object.entries(counts).map(([name, count]) => ({ name, count }))
+  },
+
   getRealtimeLogs(callback: (log: LogEntry) => void): () => void {
     const interval = setInterval(() => {
       const levels: LogEntry['level'][] = ['info', 'warning', 'error']

@@ -20,6 +20,12 @@
   gap: 1rem;
 }
 
+.chartsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
 .grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -51,6 +57,10 @@
 
 @media (max-width: 1024px) {
   .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartsRow {
     grid-template-columns: 1fr;
   }
 }
