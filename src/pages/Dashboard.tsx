@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api, LogEntry, AnomalyAlert, ModelMetrics } from '../services/api'
+import { useSettings } from '../contexts/SettingsContext'
+import { useNotifications } from '../contexts/NotificationContext'
 import MetricCard from '../components/MetricCard'
 import AnomalyChart from '../components/AnomalyChart'
 import MetricsChart from '../components/MetricsChart'
@@ -10,7 +12,20 @@ import AlertsPanel from '../components/AlertsPanel'
 import RealtimeLogs from '../components/RealtimeLogs'
 import styles from './Dashboard.module.css'
 
+function fetchAllData() {
+  return Promise.all([
+    api.getModelMetrics(),
+    api.getAlerts(),
+    api.getAnomalyTrend(7),
+    api.getLogLevelDistribution(),
+    api.getSeverityDistribution(),
+    api.getSourceDistribution(),
+  ])
+}
+
 export default function Dashboard() {
+  const { settings } = useSettings()
+  const { addUnread, showToast } = useNotifications()
   const [metrics, setMetrics] = useState<ModelMetrics | null>(null)
   const [alerts, setAlerts] = useState<AnomalyAlert[]>([])
   const [trend, setTrend] = useState<{ date: string; count: number }[]>([])
@@ -18,28 +33,65 @@ export default function Dashboard() {
   const [severity, setSeverity] = useState<{ name: string; count: number }[]>([])
   const [sources, setSources] = useState<{ name: string; count: number }[]>([])
   const [realtimeLogs, setRealtimeLogs] = useState<LogEntry[]>([])
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      const [m, a, t, ll, s, src] = await fetchAllData()
+      setMetrics(m)
+      setAlerts(a)
+      setTrend(t.map((d) => ({ date: d.date, count: d.count })))
+      setLogLevels(ll)
+      setSeverity(s)
+      setSources(src)
+      setLastUpdated(new Date())
+    } finally {
+      setRefreshing(false)
+    }
+  }, [])
 
   useEffect(() => {
-    api.getModelMetrics().then(setMetrics)
-    api.getAlerts().then(setAlerts)
-    api.getAnomalyTrend(7).then((data) =>
-      setTrend(data.map((d) => ({ date: d.date, count: d.count })))
-    )
-    api.getLogLevelDistribution().then(setLogLevels)
-    api.getSeverityDistribution().then(setSeverity)
-    api.getSourceDistribution().then(setSources)
-  }, [])
+    refresh()
+  }, [refresh])
+
+  const intervalMs = Math.max(5000, Math.min(120000, settings.refreshInterval * 1000))
 
   useEffect(() => {
     return api.getRealtimeLogs((log) => {
       setRealtimeLogs((prev) => [log, ...prev].slice(0, 10))
-    })
-  }, [])
+      if (log.isAnomaly && settings.notifications) {
+        addUnread()
+        showToast(`Anomaly detected: ${log.message}`, 'warning')
+      }
+    }, intervalMs)
+  }, [intervalMs, settings.notifications, addUnread, showToast])
 
   return (
     <div className={styles.dashboard}>
-      <h1 className={styles.title}>Dashboard</h1>
-      <p className={styles.subtitle}>Real-time anomaly detection overview</p>
+      <div className={styles.headerRow}>
+        <div>
+          <h1 className={styles.title}>Dashboard</h1>
+          <p className={styles.subtitle}>
+            Real-time anomaly detection overview
+            {lastUpdated && (
+              <span className={styles.lastUpdated}>
+                {' '}· Last updated {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+          </p>
+        </div>
+        <button
+          className={styles.refreshBtn}
+          onClick={refresh}
+          disabled={refreshing}
+          title="Refresh dashboard"
+          aria-label="Refresh dashboard"
+        >
+          {refreshing ? '⟳ Refreshing...' : '⟳ Refresh'}
+        </button>
+      </div>
 
       {metrics && (
         <div className={styles.metrics}>

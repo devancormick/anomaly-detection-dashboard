@@ -141,7 +141,7 @@ export const api = {
     return Object.entries(counts).map(([name, count]) => ({ name, count }))
   },
 
-  getRealtimeLogs(callback: (log: LogEntry) => void): () => void {
+  getRealtimeLogs(callback: (log: LogEntry) => void, intervalMs = 2000): () => void {
     const interval = setInterval(() => {
       const levels: LogEntry['level'][] = ['info', 'warning', 'error']
       const sources = ['auth-service', 'api-gateway', 'ml-pipeline']
@@ -156,7 +156,7 @@ export const api = {
           isAnomaly: Math.random() > 0.95,
         })
       }
-    }, 2000)
+    }, intervalMs)
     return () => { clearInterval(interval) }
   },
 }

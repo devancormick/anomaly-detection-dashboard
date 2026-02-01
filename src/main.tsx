@@ -4,6 +4,8 @@ import { HashRouter } from 'react-router-dom'
 import App from './App'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
+import { SettingsProvider } from './contexts/SettingsContext'
+import { NotificationProvider } from './contexts/NotificationContext'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -11,7 +13,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <HashRouter>
       <ThemeProvider>
         <AuthProvider>
-          <App />
+          <SettingsProvider>
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
+          </SettingsProvider>
         </AuthProvider>
       </ThemeProvider>
     </HashRouter>

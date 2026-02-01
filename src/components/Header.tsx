@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
+import { useNotifications } from '../contexts/NotificationContext'
 import styles from './Header.module.css'
 
 export default function Header() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const { unreadCount, clearUnread } = useNotifications()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -13,10 +15,26 @@ export default function Header() {
     navigate('/login')
   }
 
+  const handleNotificationsClick = () => {
+    clearUnread()
+    navigate('/')
+  }
+
   return (
     <header className={styles.header}>
       <div className={styles.headerLeft} />
       <div className={styles.headerRight}>
+        <button
+          className={styles.notificationBtn}
+          onClick={handleNotificationsClick}
+          title="View alerts"
+          aria-label={`${unreadCount} unread alerts`}
+        >
+          <span className={styles.bell}>🔔</span>
+          {unreadCount > 0 && (
+            <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+          )}
+        </button>
         <button
           className={styles.themeBtn}
           onClick={toggleTheme}

@@ -1,11 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSettings } from '../contexts/SettingsContext'
 import styles from './Settings.module.css'
 
-
 export default function Settings() {
-  const [apiEndpoint, setApiEndpoint] = useState('https://api.example.com/v1')
-  const [refreshInterval, setRefreshInterval] = useState(30)
-  const [notifications, setNotifications] = useState(true)
+  const { settings, saveSettings } = useSettings()
+  const [apiEndpoint, setApiEndpoint] = useState(settings.apiEndpoint)
+  const [refreshInterval, setRefreshInterval] = useState(settings.refreshInterval)
+  const [notifications, setNotifications] = useState(settings.notifications)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    setApiEndpoint(settings.apiEndpoint)
+    setRefreshInterval(settings.refreshInterval)
+    setNotifications(settings.notifications)
+  }, [settings])
+
+  const handleSave = () => {
+    saveSettings({ apiEndpoint, refreshInterval, notifications })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
 
   return (
     <div className={styles.settingsPage}>
@@ -56,7 +70,9 @@ export default function Settings() {
       </section>
 
       <div className={styles.actions}>
-        <button className={styles.saveBtn}>Save Settings</button>
+        <button className={styles.saveBtn} onClick={handleSave}>
+          {saved ? 'Saved!' : 'Save Settings'}
+        </button>
       </div>
     </div>
   )
