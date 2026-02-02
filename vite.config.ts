@@ -5,11 +5,9 @@ import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'anomaly-detection-dashboard'
-
 export default defineConfig(({ command }) => ({
   plugins: [react()],
-  base: command === 'serve' ? '/' : `/${repoName}/`,
+  base: command === 'serve' ? '/' : './',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
